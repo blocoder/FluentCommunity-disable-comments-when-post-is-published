@@ -1,0 +1,65 @@
+<?php
+// Note: In FluentSnippets you typically don't need the opening PHP tag line above.
+// Context: WordPress + FluentCommunity
+// Purpose: Detect a custom [NoComments] shortcode in feed posts and disable comments when present.
+
+
+// Hooked callback: filters the data structure for feed updates / new posts.
+/**
+ * Filter FluentCommunity feed data to optionally disable comments
+ * when the content contains a [NoComments] marker.
+ *
+ * @param array $data  The feed payload being saved/rendered. Expected keys:
+ *                     - 'type' (e.g., 'text')
+ *                     - 'message_rendered' (HTML)
+ *                     - 'meta' (associative array; may or may not be set)
+ * @param array $feed  Not used here, but required by the filter signature
+ * @return array       Potentially modified $data
+ */
+function pcl_filter_fluent_community_feed_update_data($data, $feed) {
+    // Only act on simple text posts; skip other feed types early for performance and safety
+    if ( 'text' !== $data['type'] ) {
+        return $data;
+    }
+
+    // FluentCommunity provides the rendered HTML in 'message_rendered'
+    $html = $data['message_rendered'];
+
+    // --- Detect the shortcode ---
+    // We look for a paragraph that exactly contains "[NoComments]" in its escaped form:
+    // <p>[NoComments]</p>
+    //
+    // Rationale:
+    // - Editors often wrap standalone shortcodes in <p>...</p>.
+    // - preg_match_all captures all occurrences; we only need to know if at least one exists.
+    preg_match_all('#<p>\[(NoComments)\]<\/p>#', $html, $matches);
+
+    // $matches[1] contains the group with "NoComments" if found at least once.
+    // end($matches[1]) returns the last occurrence; boolean cast below will be true if present.
+    $nocomments = "NoComments" === end($matches[1]);
+
+    // --- Apply effect when shortcode is present ---
+    if ($nocomments) {
+        // Ensure meta array exists before writing
+        if (!isset($data['meta']) || !is_array($data['meta'])) {
+            $data['meta'] = [];
+        }
+
+        // Tell FluentCommunity that comments are disabled for this post
+        $data['meta']['comments_disabled'] = 'yes';
+
+        // Clean up: remove the visual marker from the final rendered message
+        // (Users shouldn’t see [NoComments] in the published content.)
+        $html = str_replace('<p>[NoComments]</p>', "", $html);
+    }
+
+    // Write back the (potentially) modified HTML
+    $data['message_rendered'] = $html;
+
+    return $data;
+}
+
+// Register the filter for both new feed data and updates.
+// Priority 10 is fine; function expects 2 arguments ($data, $feed).
+add_filter('fluent_community/feed/update_data', 'pcl_filter_fluent_community_feed_update_data', 10, 2);
+add_filter('fluent_community/feed/new_feed_data', 'pcl_filter_fluent_community_feed_update_data', 10, 2);
