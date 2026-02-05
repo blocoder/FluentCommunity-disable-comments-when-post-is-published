@@ -26,7 +26,7 @@ function pcl_filter_fluent_community_feed_update_data($data, $feed) {
     $html = $data['message_rendered'];
 
     // --- Detect the shortcode ---
-    // We look for a paragraph that exactly contains "[NoComments]" in its escaped form:
+    // We look for a paragraph that exactly contains "[NoComments]":
     // <p>[NoComments]</p>
     //
     // Rationale:
