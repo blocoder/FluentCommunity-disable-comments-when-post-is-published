@@ -13,7 +13,7 @@ PHP-Snippet für WordPress + FluentCommunity. Erkennt den Shortcode `[NoComments
 
 ## Wichtige Dateien
 
-- `FC disable comments` – PHP-Snippet (ohne `.php`-Endung, für FluentSnippets)
+- `fluent-community-disable-comments.php` – PHP-Snippet
 
 ## Verwendung
 
