@@ -1,3 +1,7 @@
+---
+type: instruction
+---
+
 # FluentCommunity-disable-comments-when-post-is-published
 
 ## Zweck
